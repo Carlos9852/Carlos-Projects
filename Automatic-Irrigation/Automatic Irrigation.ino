@@ -61,10 +61,10 @@ void loop ()
   Serial.println();                                            //Quebra de linha
   delay(1000);                                                 //1 Segundo
 
-  if ((agora.hour() == HORA) && (agora.minute() == MINUTO)) {  //se no instante que hora atual for igual a hora da variavel
-    digitalWrite(PINO_RELE, HIGH);                             //aciona rele
+  if ((agora.hour() == Hour) && (agora.minute() == Minute)) {  //se no instante que hora atual for igual a hora da variavel
+    digitalWrite(relayPin, HIGH);                              //aciona rele
   } else {                                                     //senao
-    digitalWrite(PINO_RELE, LOW);                              //desaciona o rele
+    digitalWrite(relayPin, LOW);                               //desaciona o rele
   }
 } /* end loop */
 
