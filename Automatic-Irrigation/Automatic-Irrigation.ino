@@ -21,7 +21,7 @@ const int ralayPin =   2,        //pino definido para conexao com o rele
           Minute1   = 30,        //variavel de minuto que o rele ira acionar
           Second1   =  0;        //variavel de segundo que o rele ira acionar
 
-boolean logicRelay = false;
+bool      logicRelay = false;
 
 
 /* ========================================================================= */
