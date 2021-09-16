@@ -16,10 +16,10 @@
 
 /* ========================================================================= */
 /* --- Variaveis Globais --- */
-const int ralayPin =  2,        //pino definido para conexao com o rele
-          Hour     = 10,        //variavel de hora que o rele ira acionar
-          Minute   = 53,        //variavel de minuto que o rele ira acionar
-          Second   =  0;        //variavel de segundo que o rele ira acionar
+const int ralayPin =   2,        //pino definido para conexao com o rele
+          Hour1     =  7,        //variavel de hora que o rele ira acionar
+          Minute1   = 30,        //variavel de minuto que o rele ira acionar
+          Second1   =  0;        //variavel de segundo que o rele ira acionar
 
 boolean logicRelay = false;
 
@@ -35,7 +35,7 @@ void setup(){
   //rtc.adjust(DateTime(2019, 3, 18, 10, 53, 00)); //Ajusta o tempo do RTC para a data e hora definida pelo usuario.
   delay(100);                                      //100 Milissegundos
 
-  pinMode(relayPin,   OUTPUT);
+  pinMode(relayPin,           OUTPUT);
   digitalWrite(relayPin, !logicRelay);
   
 } /* end setup */
@@ -55,10 +55,10 @@ void loop ()
   Serial.println();                                            //Quebra de linha
   delay(1000);                                                 //1 Segundo
 
-  if ((agora.hour() == Hour) && (agora.minute() == Minute)) {  //se no instante que hora atual for igual a hora da variavel
-    digitalWrite(relayPin, logicRelay);                        //aciona rele
-  } else {                                                     //senao
-    digitalWrite(relayPin, !logicRelay);                       //desaciona o rele
+  if ((agora.hour() == Hour1) && (agora.minute() == Minute2) && (agora.second() == Second1)) {  //se no instante que hora atual for igual a hora da variavel
+    digitalWrite(relayPin,  logicRelay);                                                        //aciona rele
+  } else {                                                                                      //senao
+    digitalWrite(relayPin, !logicRelay);                                                        //desaciona o rele
   }
 } /* end loop */
 
