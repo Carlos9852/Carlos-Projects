@@ -21,6 +21,8 @@ const int ralayPin =  2,        //pino definido para conexao com o rele
           Minute   = 53,        //variavel de minuto que o rele ira acionar
           Second   =  0;        //variavel de segundo que o rele ira acionar
 
+boolean logicRelay = false;
+
 
 /* ========================================================================= */
 /* --- Função Principal --- */
@@ -34,7 +36,7 @@ void setup(){
   delay(100);                                      //100 Milissegundos
 
   pinMode(relayPin,   OUTPUT);
-  digitalWrite(relayPin, LOW);
+  digitalWrite(relayPin, !logicRelay);
   
 } /* end setup */
 
@@ -44,15 +46,7 @@ void setup(){
 void loop ()
 {
   DateTime agora = rtc.now();                                  //Faz a leitura de dados de data e hora
-  Serial.print("Data: ");                                      //Imprime "data"
-  Serial.print(agora.day(), DEC);                              //Imprime dia
-  Serial.print('/');                                           //Imprime barra
-  Serial.print(agora.month(), DEC);                            //Imprime mes
-  Serial.print('/');                                           //Imprime barra
-  Serial.print(agora.year(), DEC);                             //Imprime ano
-  Serial.print(" / Dia da semana: ");                          //Imprime texto
-  Serial.print(diasDaSemana[agora.dayOfTheWeek()]);            //Imprime dia da semana
-  Serial.print(" / Horas: ");                                  //Imprime texto
+  Serial.print("Horas: ");                                     //Imprime texto
   Serial.print(agora.hour(), DEC);                             //Imprime hora
   Serial.print(':');                                           //Imprime dois pontos
   Serial.print(agora.minute(), DEC);                           //Imprime os minutos
@@ -62,9 +56,9 @@ void loop ()
   delay(1000);                                                 //1 Segundo
 
   if ((agora.hour() == Hour) && (agora.minute() == Minute)) {  //se no instante que hora atual for igual a hora da variavel
-    digitalWrite(relayPin, HIGH);                              //aciona rele
+    digitalWrite(relayPin, logicRelay);                        //aciona rele
   } else {                                                     //senao
-    digitalWrite(relayPin, LOW);                               //desaciona o rele
+    digitalWrite(relayPin, !logicRelay);                       //desaciona o rele
   }
 } /* end loop */
 
