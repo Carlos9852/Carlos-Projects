@@ -55,7 +55,7 @@ void loop ()
   Serial.println();                                            //Quebra de linha
   delay(1000);                                                 //1 Segundo
 
-  if ((agora.hour() == Hour1) && (agora.minute() == Minute2) && (agora.second() == Second1)) {  //se no instante que hora atual for igual a hora da variavel
+  if ((agora.hour() == Hour1) && (agora.minute() == Minute1) && (agora.second() == Second1)) {  //se no instante que hora atual for igual a hora da variavel
     digitalWrite(relayPin,  logicRelay);                                                        //aciona rele
   } else {                                                                                      //senao
     digitalWrite(relayPin, !logicRelay);                                                        //desaciona o rele
