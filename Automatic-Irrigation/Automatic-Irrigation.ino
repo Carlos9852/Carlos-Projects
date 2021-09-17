@@ -17,16 +17,20 @@
 /* ========================================================================= */
 /* --- Constantes e Variaveis Globais --- */
 #define sensorUmid A0  
-const int relayPin   =   2,        //pino definido para conexao com o rele
-          Hour1      =  14,        //variavel de hora que o rele ira acionar
-          Minute1    =  33,        //variavel de minuto que o rele ira acionar
-          Second1    =   0,        //variavel de segundo que o rele ira acionar
-          tempoRega  =  2 * 60000;
+const int rs = D7, en = D6, d4 = D5, d5 = D4, d6 = D3, d7 = D0,
+          relayPin   =  D8,        //pino definido para conexao com o rele
+          Hour1      =  23,        //variavel de hora que o rele ira acionar
+          Minute1    =  26,        //variavel de minuto que o rele ira acionar
+          Second1    =   0;        //variavel de segundo que o rele ira acionar
+
+int       tempoRega  =   2,
+          valor, 
+          umid;
 
 unsigned long delay1 = 0,
               delay2 = 0;
 
-bool      logicRelay = false;
+bool      logicRelay = true;
 
 
 /* ========================================================================= */
@@ -41,6 +45,7 @@ void solo();
 //As linhas de codigo a seguir devem ser comentadas, ou descomentadas, de acordo com o modelo de RTC utilizado (DS1307 ou DS3132)
 //RTC_DS1307 rtc; //Objeto rtc da classe DS1307
 RTC_DS3231 rtc;   //Objeto rtc da classe DS3132
+LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
       
 char diasDaSemana[7][12] = {"Domingo", "Segunda", "Terca", "Quarta", "Quinta", "Sexta", "Sabado"}; //Dias da semana
 
@@ -49,12 +54,16 @@ char diasDaSemana[7][12] = {"Domingo", "Segunda", "Terca", "Quarta", "Quinta", "
 /* --- Função Principal --- */
 void setup(){
   Serial.begin(115200);                              //Inicializa a comunicacao serial
+  lcd.begin(16, 2);
+  lcd.print("Hello World!");
   if (!rtc.begin()) {                              //Se o RTC nao for inicializado, faz
     Serial.println("RTC NAO INICIALIZADO");        //Imprime o texto
     while (1);                                     //Trava o programa
   }
   //rtc.adjust(DateTime(2021, 9, 21, 13, 21, 00)); //Ajusta o tempo do RTC para a data e hora definida pelo usuario.
   delay(100);                                      //100 Milissegundos
+  
+  tempoRega = tempoRega * 60;
 
   pinMode(relayPin,           OUTPUT);
   digitalWrite(relayPin, !logicRelay);
@@ -65,14 +74,13 @@ void setup(){
 /* ========================================================================= */
 /* --- Loop Infinito --- */
 void loop ()
-{
-  DateTime agora = rtc.now();
-
+{ 
   if((millis() - delay1) > 1000){
     delay1 = millis();
-    lcdPrint();
+    lcdPrint();  
     solo();
   }
+
 } /* end loop */
 
 
@@ -81,36 +89,50 @@ void loop ()
 void lcdPrint(){
   DateTime agora = rtc.now();                                  //Faz a leitura de dados de data e hora
 
-  Serial.print("Hora: ");                                      //Imprime texto
-  Serial.print(agora.hour(), DEC);                             //Imprime hora
-  Serial.print(':');                                           //Imprime dois pontos
-  Serial.print(agora.minute(), DEC);                           //Imprime os minutos
-  Serial.print(':');                                           //Imprime dois pontos
-  Serial.print(agora.second(), DEC);                         //Imprime os segundos
+  valor = analogRead(sensorUmid);
+  umid = map(valor, 0, 1023, 100, 0);
+  lcd.clear();
+  lcd.print("Hora: ");                                      //Imprime texto
+  lcd.print(agora.hour(), DEC);                             //Imprime hora
+  lcd.print(':');                                           //Imprime dois pontos
+  lcd.print(agora.minute(), DEC);                           //Imprime os minutos
+  lcd.print(':');                                           //Imprime dois pontos
+  lcd.print(agora.second(), DEC);                         //Imprime os segundos
   
 } /* end lcdPrint */
 
 void solo(){
-  int valor, 
-      umid;
+
+  static bool aux;
   
   valor = analogRead(sensorUmid);
   DateTime agora = rtc.now();
   umid = map(valor, 0, 1023, 100, 0);
-
-  Serial.print("  ");
-  Serial.print("Umidade: ");
-  Serial.print(umid);
-  Serial.println('%');
   
+  lcd.setCursor(0,1);
+  lcd.print("Umidade: ");
+  lcd.print(umid);
+  lcd.print('%');
+
   if ((agora.hour() == Hour1) && (agora.minute() == Minute1) && (agora.second() == Second1)) {  //se no instante que hora atual for igual a hora da variavel
-    delay2 = millis();
-    if (umid <= 70){
-      while((millis() - delay2) < tempoRega){
-        digitalWrite(relayPin,  logicRelay);
+    if(umid <= 70){
+      for(int i = 0; i <= tempoRega; i++){
+        digitalWrite(relayPin, logicRelay);
+        lcdPrint();
+        lcd.setCursor(0, 1);
+        lcd.print("Regando");
+        for(int i = 0; i < 3; i++){
+          lcd.print('.');
+          delay(333);
+        }
+        aux = true;
       }
     }
-      digitalWrite(relayPin, !logicRelay);
+  }
+
+  if(aux == true){
+    aux = false;
+    digitalWrite(relayPin, !logicRelay);
   }
 }
 
