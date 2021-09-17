@@ -80,7 +80,6 @@ void loop ()
     lcdPrint();  
     solo();
   }
-
 } /* end loop */
 
 
@@ -134,7 +133,7 @@ void solo(){
     aux = false;
     digitalWrite(relayPin, !logicRelay);
   }
-}
+} /* end solo */
 
 /* ============================================================================  
                                                               
