@@ -19,9 +19,12 @@
 #define sensorUmid A0  
 const int rs = D7, en = D6, d4 = D5, d5 = D4, d6 = D3, d7 = D0,
           relayPin   =  D8,        //pino definido para conexao com o rele
-          Hour1      =  23,        //variavel de hora que o rele ira acionar
-          Minute1    =  26,        //variavel de minuto que o rele ira acionar
-          Second1    =   0;        //variavel de segundo que o rele ira acionar
+          Hour1      =   0,        //variavel de hora que o rele ira acionar
+          Minute1    =  25,        //variavel de minuto que o rele ira acionar
+          Second1    =   0,        //variavel de segundo que o rele ira acionar
+          Hour2      =   0,        //variavel de hora que o rele ira acionar
+          Minute2    =  31,        //variavel de minuto que o rele ira acionar
+          Second2    =   0;        //variavel de segundo que o rele ira acionar
 
 int       tempoRega  =   2,
           valor, 
@@ -55,9 +58,14 @@ char diasDaSemana[7][12] = {"Domingo", "Segunda", "Terca", "Quarta", "Quinta", "
 void setup(){
   Serial.begin(115200);                              //Inicializa a comunicacao serial
   lcd.begin(16, 2);
-  lcd.print("Hello World!");
+  lcd.setCursor(1, 0);
+  lcd.print("Smart Watering");
+  lcd.setCursor(4, 1);
+  lcd.print("By Carlos");
+  delay(5000);
   if (!rtc.begin()) {                              //Se o RTC nao for inicializado, faz
-    Serial.println("RTC NAO INICIALIZADO");        //Imprime o texto
+    lcd.clear();
+    lcd.print("RTC NAO INICIOU");        //Imprime o texto
     while (1);                                     //Trava o programa
   }
   //rtc.adjust(DateTime(2021, 9, 21, 13, 21, 00)); //Ajusta o tempo do RTC para a data e hora definida pelo usuario.
@@ -80,6 +88,7 @@ void loop ()
     lcdPrint();  
     solo();
   }
+
 } /* end loop */
 
 
@@ -113,8 +122,16 @@ void solo(){
   lcd.print(umid);
   lcd.print('%');
 
-  if ((agora.hour() == Hour1) && (agora.minute() == Minute1) && (agora.second() == Second1)) {  //se no instante que hora atual for igual a hora da variavel
+  if (((agora.hour() == Hour1) && (agora.minute() == Minute1) && (agora.second() == Second1)) || ((agora.hour() == Hour2) && (agora.minute() == Minute2) && (agora.second() == Second2))) {  //se no instante que hora atual for igual a hora da variavel
+    lcd.clear();
+    lcd.setCursor(3, 0);
+    lcd.print("Analisando!");
+    delay(5000);
     if(umid <= 70){
+      lcd.clear();
+      lcd.setCursor(3, 0);
+      lcd.print("Solo seco!");
+      delay(5000);
       for(int i = 0; i <= tempoRega; i++){
         digitalWrite(relayPin, logicRelay);
         lcdPrint();
@@ -126,6 +143,15 @@ void solo(){
         }
         aux = true;
       }
+      lcd.clear();
+      lcd.print("Solo Regado");
+      delay(5000);
+    }
+    else{
+      lcd.clear();
+      lcd.setCursor(3, 0);
+      lcd.print("Solo umido!");
+      delay(5000);
     }
   }
 
@@ -133,7 +159,7 @@ void solo(){
     aux = false;
     digitalWrite(relayPin, !logicRelay);
   }
-} /* end solo */
+}
 
 /* ============================================================================  
                                                               
