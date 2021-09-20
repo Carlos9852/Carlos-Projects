@@ -21,8 +21,8 @@ const int rs = D7, en = D6, d4 = D5, d5 = D4, d6 = D3, d7 = D0,      //variaveis
           relayPin   =  D8,                                //pino definido para conexao com o rele
           Hour1      =   7,                                //variavel de hora1 que o rele ira acionar
           Minute1    =  30,                                //variavel de minuto1 que o rele ira acionar
-          Second1    =  19,                                //variavel de segundo1 que o rele ira acionar
-          Hour2      =   0,                                //variavel de hora2 que o rele ira acionar
+          Second1    =   0,                                //variavel de segundo1 que o rele ira acionar
+          Hour2      =  19,                                //variavel de hora2 que o rele ira acionar
           Minute2    =  30,                                //variavel de minuto2 que o rele ira acionar
           Second2    =   0;                                //variavel de segundo2 que o rele ira acionar
 
@@ -84,7 +84,6 @@ void loop ()
     lcdPrint();  
     solo();
   }
-
 } /* end loop */
 
 
