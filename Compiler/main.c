@@ -3,7 +3,7 @@
 
 int main(){
     
-    printf("Hello, Wordl!");
+    printf("Hello Wordl!");
     getchar();
     return 0;
 }
