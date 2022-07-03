@@ -18,6 +18,7 @@
 #define IN2 5
 #define IN3 6
 #define IN4 9
+#define pinInfra1 8
 #define echoPin  11
 #define trigPin  10
 
@@ -38,6 +39,8 @@ int motor[2][2] = {{IN1, IN2},
 
 //===============================================================
 // --- Váriaveis Globais ---
+float cmMsec, inMsec;
+long microsec;
 int distancia;
 boolean flag = false;
 String result;
@@ -57,11 +60,12 @@ Ultrasonic ultrasonic(trigPin,echoPin);
 //===============================================================
 // --- Void de Inicialização ---
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(9600);
   for(int i = 0; i < 4; i++){
     pinMode(portas[i], OUTPUT);
     digitalWrite(portas[i], LOW);
   }
+  pinMode(pinInfra1, INPUT);
   pinMode(echoPin, INPUT);
   pinMode(trigPin, OUTPUT);
 }
@@ -73,19 +77,30 @@ void loop() {
   
   hcsr04();
   Serial.println(result);
-  if(distancia < 10){
-  motorConfig(freio);
-  delay(1);
-  motorConfig(tras);
-  delay(300);
-  motorConfig(freio);
-  delay(1);
-  motorConfig(direita);
-  delay(600);
-  motorConfig(freio);
-          
-  }
+  
+  if( (digitalRead(pinInfra1) == 0) && (distancia > 20) ){
   motorConfig(frente);
+  delay(500);
+  motorConfig(direita);
+  delay(400);          }
+
+  else if( (digitalRead(pinInfra1) == 1) ){
+    motorConfig(freio);
+    delay(1);
+    motorConfig(tras);
+    delay(300);
+    motorConfig(freio);
+    delay(1);
+    motorConfig(direita);
+    delay(600);
+    motorConfig(freio);
+  }
+
+  else if( (distancia < 20) && ((digitalRead(pinInfra1) == 0)) ){
+    motorConfig(frente); 
+  }
+  
+  //motorConfig(frente);
   delay(1);
 }
 
