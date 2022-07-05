@@ -42,7 +42,6 @@ int motor[2][2] = {{IN1, IN2},
 float cmMsec, inMsec;
 long microsec;
 int distancia;
-boolean flag = false;
 String result;
 
 
