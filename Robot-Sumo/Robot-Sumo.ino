@@ -77,14 +77,10 @@ void loop() {
   
   hcsr04();
   Serial.println(result);
-  
-  if( (digitalRead(pinInfra1) == 0) && (distancia > 20) ){
-  motorConfig(frente);
-  delay(500);
-  motorConfig(direita);
-  delay(400);          }
 
-  else if( (digitalRead(pinInfra1) == 1) ){
+
+  //Encontrou a borda da arena
+  if( (digitalRead(pinInfra1) == 1) ){
     motorConfig(freio);
     delay(1);
     motorConfig(tras);
@@ -95,12 +91,19 @@ void loop() {
     delay(600);
     motorConfig(freio);
   }
+  
+  //Procurando o Oponente
+  if( (digitalRead(pinInfra1) == 0) && (distancia > 20) ){
+    motorConfig(frente);
+    delay(300);
+    motorConfig(esquerda);
+    delay(300);
+  }
 
-  else if( (distancia < 20) && ((digitalRead(pinInfra1) == 0)) ){
+  //Encontrou o oponente
+  if( (distancia < 20) && ((digitalRead(pinInfra1) == 0)) ){
     motorConfig(frente); 
   }
-  
-  //motorConfig(frente);
   delay(1);
 }
 
@@ -152,15 +155,12 @@ void motorConfig(int direcao){
 }
 
 void hcsr04(){
-    digitalWrite(trigPin, LOW); //SETA O PINO 6 COM UM PULSO BAIXO "LOW"
-    delayMicroseconds(2); //INTERVALO DE 2 MICROSSEGUNDOS
-    digitalWrite(trigPin, HIGH); //SETA O PINO 6 COM PULSO ALTO "HIGH"
-    delayMicroseconds(10); //INTERVALO DE 10 MICROSSEGUNDOS
-    digitalWrite(trigPin, LOW); //SETA O PINO 6 COM PULSO BAIXO "LOW" NOVAMENTE
-    //FUNÇÃO RANGING, FAZ A CONVERSÃO DO TEMPO DE
-    //RESPOSTA DO ECHO EM CENTIMETROS, E ARMAZENA
-    //NA VARIAVEL "distancia"
-    distancia = (ultrasonic.Ranging(CM)); //VARIÁVEL GLOBAL RECEBE O VALOR DA DISTÂNCIA MEDIDA
-    result = String(distancia); //VARIÁVEL GLOBAL DO TIPO STRING RECEBE A DISTÂNCIA(CONVERTIDO DE INTEIRO PARA STRING)
-    delay(1); //INTERVALO DE 500 MILISSEGUNDOS
+    digitalWrite(trigPin, LOW);
+    delayMicroseconds(2);
+    digitalWrite(trigPin, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(trigPin, LOW);
+    distancia = (ultrasonic.Ranging(CM)); 
+    result = String(distancia);
+    delay(1);
  }
