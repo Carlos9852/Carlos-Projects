@@ -18,7 +18,8 @@
 #define IN2 5
 #define IN3 6
 #define IN4 9
-#define pinInfra1 8
+#define infraEsquerda 8
+#define infraDireita 13
 #define echoPin  11
 #define trigPin  10
 
@@ -64,7 +65,8 @@ void setup() {
     pinMode(portas[i], OUTPUT);
     digitalWrite(portas[i], LOW);
   }
-  pinMode(pinInfra1, INPUT);
+  pinMode(infraDireita, INPUT);
+  pinMode(infraEsquerda, INPUT);
   pinMode(echoPin, INPUT);
   pinMode(trigPin, OUTPUT);
 }
@@ -73,36 +75,16 @@ void setup() {
 //===============================================================
 // --- Loop Infinito ---
 void loop() {
-  
-  hcsr04();
-  Serial.println(result);
-
-
-  //Encontrou a borda da arena
-  if( (digitalRead(pinInfra1) == 1) ){
-    motorConfig(freio);
-    delay(1);
+  if((digitalRead(infraDireita) == 1) || (digitalRead(infraEsquerda) == 1)){
     motorConfig(tras);
-    delay(300);
-    motorConfig(freio);
-    delay(1);
-    motorConfig(direita);
-    delay(600);
-    motorConfig(freio);
-  }
-  
-  //Procurando o Oponente
-  if( (digitalRead(pinInfra1) == 0) && (distancia > 20) ){
-    motorConfig(frente);
-    delay(300);
+    delay(500);
     motorConfig(esquerda);
     delay(300);
+    motorConfig(frente);
+    delay(200);
   }
 
-  //Encontrou o oponente
-  if( (distancia < 20) && ((digitalRead(pinInfra1) == 0)) ){
-    motorConfig(frente); 
-  }
+  motorConfig(frente);
   delay(1);
 }
 
