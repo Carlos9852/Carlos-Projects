@@ -1,146 +1,101 @@
-/*
- motor       | IN1  | IN2  |
- ------------|------|------|
- Horário     | HIGH | LOW  |
- Anti-Horário| LOW  | HIGH |
- Ponto Morto | LOW  | LOW  |
- Freio       | HIGH | HIGH |
- */
-
-//===============================================================
-// --- Bibliotecas ---
+// =========================================================
+// --- Bibliotecas Auxiliares ---
 
 
-//===============================================================
+// =========================================================
 // --- Mapeamento de Hardware ---
-#define IN1 8
-#define IN2 9
-#define IN3 10
-#define IN4 11
-#define ENA 5
-#define ENB 6
-#define bot 13
-#define infraEsquerda 3
-#define infraDireita 2
-#define sensor A5
+#define IN1    10                             //Driver L293D
+#define IN2    11                             //Driver L293D
+#define ENA     5                             //Enable driver
+#define ENB     6                             //Enable driver
+#define IN3     9                             //Driver L293D
+#define IN4     8                             //Driver L293D
+#define trig    4                             //Saída para o pino de trigger do sensor
+#define echo    3                             //Entrada para o pino de echo do sensor
 
 
-//===============================================================
-// --- Constantes Globais ---
-#define direita 0
-#define esquerda 1
-#define frente 2
-#define tras 3
-#define freio 4
-#define potMax 200
-#define potMin 90
-const int portas[6] = {IN1, IN2, IN3, IN4, ENA, ENB};
-int motor[2][2] = {{IN1, IN2},
-                   {IN3, IN4}};
-
-
-//===============================================================
+// =========================================================
 // --- Váriaveis Globais ---
-int distancia,
-    pwm = 200;
+float dist;
+int   pwm;
 
-
-
-//===============================================================
+// =========================================================
 // --- Protótipo das Funções ---
-void motorConfig(int direcao);
-void sharp();
+float measureDistance();
 
 
-//===============================================================
-// --- Void de Inicialização ---
-void setup() {
+// =========================================================
+// --- Interrupção ---
+ISR(TIMER2_OVF_vect){
+  static int baseT1 = 0,           //variável local estática para base de tempo 1
+             baseT2 = 0;           //variável local estática para base de tempo 2
+
+  TCNT2 = 0x06;                  //reinicializa Timer0
+
+  baseT1++;                        //incremente baseT1 em um
+  baseT2++;                        //incremente baseT2 em um
+
+  if(baseT1 == 10){
+    baseT1 = 0;
+    PORTB ^= (1<<PORTB5);          //inverte o estado de digital 13 (PB5)
+  }
+}//end ISR
+
+
+// =========================================================
+// --- Função Principal ---
+void setup(){
+
   Serial.begin(9600);
-  for(int i = 0; i < 6; i++){
-    pinMode(portas[i], OUTPUT);
-    digitalWrite(portas[i], LOW);
-  }
-  pinMode(infraDireita, INPUT);
-  pinMode(infraEsquerda, INPUT);
-  pinMode(sensor, INPUT);
-  pinMode(bot, INPUT_PULLUP);
 
-  analogWrite(ENA, pwm);
-  analogWrite(ENB, pwm);
+  DDRD &= ~(1<<4);               //configura digital 4 (PD4) como entrada (sensor1)
+  DDRD &= ~(1<<7);               //configura digital 7 (PD7) como entrada (sensor2)
 
-  while( digitalRead(bot) == 1){
-    motorConfig(freio);
-    delay(1);
+  DDRD  |=  (1<<3);              //configura digital 3 (PD3) como saída  (trig)
+  PORTD &= ~(1<<3);              //inicializa digital 3 (PD3) em LOW (trig)  
+  DDRD  &= ~(1<<2);              //configura digital 2 (PD2) como entrada (echo)
+
+  DDRD  |=  (1<<5);              //configura digital 5 (PD5) como saída (ENA)
+  PORTD &= ~(1<<5);              //inicializa digital 5 (PD5) em LOW (ENA)
+  DDRD  |=  (1<<6);              //configura digital 6 (PD6) como saída (ENB)
+  PORTD &= ~(1<<6);              //inicializa digital 6 (PD6) em LOW (ENB)
+  for(int i = 2; i <= 5; i++){
+    DDRC  |=  (1<<i);            //configura A2-A5(PORTC) como saída (IN1--IN4)
+    PORTC &= ~(1<<i);            //inicializa A2-A5(PORTC) em LOW (IN1--IN4)
   }
+
+
+  DDRB  |=  (1<<PORTB5);         //configura digital 13 (PB5) como saída
+  PORTB &= ~(1<<PORTB5);         //inicializa digital 13 (PB5) em LOW
+
+  cli();                         //desliga interrupções
+  TCCR2A = 0x00;                 //define para operação normal
+  TCCR2B = 0x04;                 //prescaler 1:64
+  TCNT2  = 0x06;                 //inicia Timer0 para contar até 250
+  TIMSK2 = 0x01;                 //habilita interrupção do Timer0
+  sei();                         //liga interrupções
+  
+}//end main
+
+
+
+void loop(){
+  dist = measureDistance();
+  Serial.print(dist);
+  Serial.println("cm");
+  delay(1000);
 }
 
 
-//===============================================================
-// --- Loop Infinito ---
-void loop() {
 
-  sharp();
-  if((digitalRead(infraDireita) == 1) || (digitalRead(infraEsquerda) == 1)){
-    motorConfig(tras);
-    delay(500);
-    motorConfig(esquerda);
-    delay(300);
-    motorConfig(frente);
-    delay(200);
-  }
+float measureDistance(){         //Função que retorna a distância em centímetros
 
-  motorConfig(frente);
-  delay(1);
-}
+  float pulse;                   //Armazena o valor de tempo em µs que o pino echo fica em nível alto
 
+  PORTD |= (1<<3);               //Saída de trigger em nível alto
+  delayMicroseconds(11);         //Por 10µs ...
+  PORTD &= ~(1<<3);              //Saída de trigger volta a nível baixo
 
-//===============================================================
-// --- Outras Funções ---
-void motorConfig(int direcao){
-  switch(direcao){
-    case 0:
-      Serial.println("Virando para direita!");
-      digitalWrite(motor[direita][0],   LOW);
-      digitalWrite(motor[direita][1],  HIGH);
-      digitalWrite(motor[esquerda][0], HIGH);
-      digitalWrite(motor[esquerda][1],  LOW);
-      break;
-    
-    case 1:
-      Serial.println("Virando para Esquerda!");
-      digitalWrite(motor[direita][0],  HIGH);
-      digitalWrite(motor[direita][1],   LOW);
-      digitalWrite(motor[esquerda][0],  LOW);
-      digitalWrite(motor[esquerda][1], HIGH);
-      break;
-      
-    case 2:
-      Serial.println("Indo para frente!");
-      digitalWrite(motor[direita][0],  HIGH);
-      digitalWrite(motor[direita][1],   LOW);
-      digitalWrite(motor[esquerda][0], HIGH);
-      digitalWrite(motor[esquerda][1],  LOW);
-      break;
-      
-    case 3:
-      Serial.println("Voltando para Trás!");
-      digitalWrite(motor[direita][0],   LOW);
-      digitalWrite(motor[direita][1],  HIGH);
-      digitalWrite(motor[esquerda][0],  LOW);
-      digitalWrite(motor[esquerda][1], HIGH);
-      break;
-      
-    case 4:
-      Serial.println("Acionando Freio!");
-      digitalWrite(motor[direita][0], HIGH);
-      digitalWrite(motor[direita][1], HIGH);
-      digitalWrite(motor[esquerda][0], HIGH);
-      digitalWrite(motor[esquerda][1], HIGH);
-      break;
-  }
-}
-
-void sharp(){
-  float volts = analogRead(sensor) * 0.0048828125;
-  distancia = 26 * pow(volts, -1);
- }
+  pulse = pulseIn(2, HIGH);      //Mede o tempo em que echo fica em nível alto e armazena na variável pulse
+  return (pulse/58.82);          //Calcula distância em centímetros e retorna o valor
+}//end measureDistante
