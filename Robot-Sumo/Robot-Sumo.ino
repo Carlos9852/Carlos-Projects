@@ -51,9 +51,9 @@ void setup(){
   DDRD &= ~(1<<4);               //configura digital 4 (PD4) como entrada (sensor1)
   DDRD &= ~(1<<7);               //configura digital 7 (PD7) como entrada (sensor2)
 
-  DDRD  |=  (1<<3);              //configura digital 3 (PD3) como saída  (trig)
-  PORTD &= ~(1<<3);              //inicializa digital 3 (PD3) em LOW (trig)  
-  DDRD  &= ~(1<<2);              //configura digital 2 (PD2) como entrada (echo)
+  DDRC  |=  (1<<0);              //configura digital 3 (PD3) como saída  (trig)
+  PORTC &= ~(1<<0);              //inicializa digital 3 (PD3) em LOW (trig)  
+  DDRC  &= ~(1<<1);              //configura digital 2 (PD2) como entrada (echo)
 
   DDRD  |=  (1<<5);              //configura digital 5 (PD5) como saída (ENA)
   PORTD &= ~(1<<5);              //inicializa digital 5 (PD5) em LOW (ENA)
@@ -74,16 +74,20 @@ void setup(){
   TCNT2  = 0x06;                 //inicia Timer0 para contar até 250
   TIMSK2 = 0x01;                 //habilita interrupção do Timer0
   sei();                         //liga interrupções
+
+  analogWrite(5, 250);
+  analogWrite(6, 250);
   
 }//end main
 
 
 
 void loop(){
-  dist = measureDistance();
-  Serial.print(dist);
-  Serial.println("cm");
-  delay(1000);
+  PORTC |= (1<<2);
+  PORTC &= ~(1<<3);
+  PORTC |= (1<<4);
+  PORTC &= ~(1<<5);
+
 }
 
 
@@ -92,10 +96,10 @@ float measureDistance(){         //Função que retorna a distância em centíme
 
   float pulse;                   //Armazena o valor de tempo em µs que o pino echo fica em nível alto
 
-  PORTD |= (1<<3);               //Saída de trigger em nível alto
+  PORTC |= (1<<0);               //Saída de trigger em nível alto
   delayMicroseconds(11);         //Por 10µs ...
-  PORTD &= ~(1<<3);              //Saída de trigger volta a nível baixo
+  PORTC &= ~(1<<0);              //Saída de trigger volta a nível baixo
 
-  pulse = pulseIn(2, HIGH);      //Mede o tempo em que echo fica em nível alto e armazena na variável pulse
+  pulse = pulseIn(A1, HIGH);      //Mede o tempo em que echo fica em nível alto e armazena na variável pulse
   return (pulse/58.82);          //Calcula distância em centímetros e retorna o valor
 }//end measureDistante
