@@ -36,18 +36,18 @@ ISR(TIMER2_OVF_vect){
   if(baseT1 == 1000){
     baseT1 = 0;
     Y = PINC & (1<<PORTC0);
-    X = PINC & (1<<PORTC1);
-  }
+    X = PINC & (1<<PORTC4);
+  }//end if
 
   if(Y){
    baseT2 = 0;
    motorConfig(backward); 
-  }
+  }//end if
 
   if(X){
    baseT2 = 0;
    motorConfig(forward); 
-  }
+  }//end if
 
   if(baseT2 == 600) motorConfig(left);
 
@@ -73,8 +73,8 @@ void setup(){
 
   DDRC  &= ~(1<<PORTC0);               //configura analogico 0 (PC0) como entrada (sensor1)
   PORTC |=  (1<<PORTC0);               //habilita o resistor de pull-up interno do A0
-  DDRC  &= ~(1<<PORTC1);               //configura analogico 1 (PC1) como entrada (sensor2)
-  PORTC |=  (1<<PORTC1);               //habilita o resistor de pull-up interno do A1
+  DDRC  &= ~(1<<PORTC4);               //configura analogico 4 (PC4) como entrada (sensor2)
+  PORTC |=  (1<<PORTC4);               //habilita o resistor de pull-up interno do A4
 
   DDRC  |=  (1<<PORTC2);              //configura analogico 2 (PC2) como saída  (trig)
   PORTC &= ~(1<<PORTC2);              //inicializa analogico 2 (PC2) em LOW (trig)  
@@ -99,13 +99,12 @@ void loop(){
     pwm0b = 110;
     pwm0a = 100;
     flag = true;
-  }
-    else{
+  }else{
       pwm0b = 250;
       pwm0a = 245;
       motorConfig(forward);
-    }
-}
+    }//end else
+}//end loop
 
 
 float measureDistance(){         //Função que retorna a distância em centímetros
@@ -126,7 +125,7 @@ void motorConfig(byte motor){
   if((motor==left) || (motor==right)){
     pwm0a = 100;
     pwm0b = 110;
-  }
+  }//end if
   
   PORTB &= ~(1<<PORTB4);
   PORTD &= ~(1<<PORTD4);
@@ -138,9 +137,9 @@ void motorConfig(byte motor){
     PORTD |= (1<<PORTD4);
     delayMicroseconds(2);
     PORTD &= ~(1<<PORTD4);
-  }
+  }//end for
   PORTB |= (1<<PORTB4);
 
   analogWrite(6, pwm0a);
   analogWrite(5, pwm0b);
-}
+}//end motorConfig
