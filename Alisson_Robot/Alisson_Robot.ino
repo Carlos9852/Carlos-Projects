@@ -3,7 +3,7 @@
 float dist;
 int   pwm0a = 150,
       pwm0b = 150;
-bool  flag;
+bool  flag  = false;
 
 
 // =========================================================
