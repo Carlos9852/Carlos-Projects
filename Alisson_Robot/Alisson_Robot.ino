@@ -144,5 +144,4 @@ void motorConfig(byte motor){
 
   analogWrite(6, pwm0a);
   analogWrite(5, pwm0b);
-
 }
