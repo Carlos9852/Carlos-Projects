@@ -55,6 +55,7 @@ ISR(TIMER2_OVF_vect){
   
 }//end ISR
 
+
 // =========================================================
 // --- Função Principal ---
 void setup(){
@@ -91,7 +92,6 @@ void setup(){
 }//end main
 
 
-
 void loop(){
 
   dist = measureDistance();
@@ -106,7 +106,6 @@ void loop(){
       motorConfig(forward);
     }
 }
-
 
 
 float measureDistance(){         //Função que retorna a distância em centímetros
