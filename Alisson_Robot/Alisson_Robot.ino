@@ -36,7 +36,7 @@ ISR(TIMER2_OVF_vect){
   if(baseT1 == 1000){
     baseT1 = 0;
     Y = PINC & (1<<PORTC0);
-    X = PINC & (1<<PORTC4);
+    X = PINC & (1<<PORTC2);
   }//end if
 
   if(Y){
@@ -73,12 +73,12 @@ void setup(){
 
   DDRC  &= ~(1<<PORTC0);               //configura analogico 0 (PC0) como entrada (sensor1)
   PORTC |=  (1<<PORTC0);               //habilita o resistor de pull-up interno do A0
-  DDRC  &= ~(1<<PORTC4);               //configura analogico 4 (PC4) como entrada (sensor2)
-  PORTC |=  (1<<PORTC4);               //habilita o resistor de pull-up interno do A4
+  DDRC  &= ~(1<<PORTC2);               //configura analogico 2 (PC2) como entrada (sensor2)
+  PORTC |=  (1<<PORTC2);               //habilita o resistor de pull-up interno do A2
 
-  DDRC  |=  (1<<PORTC2);              //configura analogico 2 (PC2) como saída  (trig)
-  PORTC &= ~(1<<PORTC2);              //inicializa analogico 2 (PC2) em LOW (trig)  
-  DDRC  &= ~(1<<PORTC3);              //configura analogico 3 (PC3) como entrada (echo)
+  DDRB  |=  (1<<PORTB1);              //configura digital 9 (PB1) como saída  (trig)
+  PORTB &= ~(1<<PORTB1);              //inicializa digital 9 (PB1) em LOW (trig)  
+  DDRB  &= ~(1<<PORTB2);              //configura digital 10 (PB2) como entrada (echo)
 
   cli();                         //desliga interrupções
   TCCR2A = 0x00;                 //define para operação normal
@@ -111,11 +111,11 @@ float measureDistance(){         //Função que retorna a distância em centíme
 
   float pulse;                   //Armazena o valor de tempo em µs que o pino echo fica em nível alto
 
-  PORTC |= (1<<PORTC2);          //Saída de trigger em nível alto
+  PORTB |= (1<<PORTB1);          //Saída de trigger em nível alto
   delayMicroseconds(10);         //Por 10µs ...
-  PORTC &= ~(1<<PORTC2);         //Saída de trigger volta a nível baixo
+  PORTB &= ~(1<<PORTB1);         //Saída de trigger volta a nível baixo
 
-  pulse = pulseIn(A3, HIGH);     //Mede o tempo em que echo fica em nível alto e armazena na variável pulse
+  pulse = pulseIn(10, HIGH);     //Mede o tempo em que echo fica em nível alto e armazena na variável pulse
   return (pulse/58.82);          //Calcula distância em centímetros e retorna o valor
 }//end measureDistante
 
