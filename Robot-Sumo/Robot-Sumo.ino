@@ -17,7 +17,21 @@
 // =========================================================
 // --- Váriaveis Globais ---
 float dist;
-int   pwm;
+int   pwm,
+       Y      = 0, 
+       X      = 0;
+bool flag = false;
+int   pwm0a = 150,
+      pwm0b = 150;
+
+
+// =========================================================
+// --- Váriaveis Globais ---
+const int forward =  1,
+          backward = 2,
+          left     = 3,
+          right    = 4;
+
 
 // =========================================================
 // --- Protótipo das Funções ---
@@ -29,18 +43,22 @@ float measureDistance();
 ISR(TIMER2_OVF_vect){
   static int baseT1 = 0,           //variável local estática para base de tempo 1
              baseT2 = 0;           //variável local estática para base de tempo 2
+            
 
   TCNT2 = 0x06;                  //reinicializa Timer0
 
   baseT1++;                        //incremente baseT1 em um
   baseT2++;                        //incremente baseT2 em um
 
-  if(baseT1 == 10){
+  if(baseT1 == 1000){
     baseT1 = 0;
-    PORTB ^= (1<<PORTB5);          //inverte o estado de digital 13 (PB5)
-  }
-}//end ISR
+    Y = PIND & (1<<PORTD3);
+    X = PIND & (1<<PORTD2);
+  }//end if
 
+  if(flag) motorConfig(right);
+  
+}//end ISR
 
 // =========================================================
 // --- Função Principal ---
@@ -48,12 +66,12 @@ void setup(){
 
   Serial.begin(9600);
 
-  DDRD &= ~(1<<4);               //configura digital 4 (PD4) como entrada (sensor1)
-  DDRD &= ~(1<<7);               //configura digital 7 (PD7) como entrada (sensor2)
+  DDRD &= ~(1<<3);               //configura digital 4 (PD4) como entrada (sensor1)
+  DDRD &= ~(1<<2);               //configura digital 2 (PD2) como entrada (sensor2)
 
-  DDRC  |=  (1<<0);              //configura digital 3 (PD3) como saída  (trig)
-  PORTC &= ~(1<<0);              //inicializa digital 3 (PD3) em LOW (trig)  
-  DDRC  &= ~(1<<1);              //configura digital 2 (PD2) como entrada (echo)
+  DDRC  |=  (1<<0);              //configura analogica 0 (PC0) como saída  (trig)
+  PORTC &= ~(1<<0);              //inicializa analogica 0 (PC0) em LOW (trig)  
+  DDRC  &= ~(1<<1);              //configura analogica 1 (PC1)) como entrada (echo)
 
   DDRD  |=  (1<<5);              //configura digital 5 (PD5) como saída (ENA)
   PORTD &= ~(1<<5);              //inicializa digital 5 (PD5) em LOW (ENA)
@@ -75,19 +93,33 @@ void setup(){
   TIMSK2 = 0x01;                 //habilita interrupção do Timer0
   sei();                         //liga interrupções
 
-  analogWrite(5, 250);
-  analogWrite(6, 250);
+  analogWrite(5, pwm0b);
+  analogWrite(6, pwm0a);
   
 }//end main
 
 
 
 void loop(){
-  PORTC |= (1<<2);
-  PORTC &= ~(1<<3);
-  PORTC |= (1<<4);
-  PORTC &= ~(1<<5);
-
+  dist = measureDistance();
+  if(dist > 15.0){
+    pwm0b = 140;
+    pwm0a = 140;
+    flag = true;
+  }else{
+      flag=false;
+      pwm0b = 250;
+      pwm0a = 245;
+      motorConfig(forward);
+    }//end else
+    
+   if(Y || X){
+   motorConfig(backward);
+   delay(600);
+   motorConfig(left);
+   delay(300);
+   motorConfig(forward);
+  }//end if
 }
 
 
@@ -101,5 +133,42 @@ float measureDistance(){         //Função que retorna a distância em centíme
   PORTC &= ~(1<<0);              //Saída de trigger volta a nível baixo
 
   pulse = pulseIn(A1, HIGH);      //Mede o tempo em que echo fica em nível alto e armazena na variável pulse
+  Serial.print(pulse/58.2);
+  Serial.println("cm");
   return (pulse/58.82);          //Calcula distância em centímetros e retorna o valor
 }//end measureDistante
+
+
+void motorConfig(int modo){
+  analogWrite(6, pwm0a);
+  analogWrite(5, pwm0b);
+  switch(modo){
+    case 1:
+
+      PORTC |=  (1<<PORTC2);
+      PORTC &= ~(1<<PORTC3);
+      PORTC |= (1<<PORTC4);
+      PORTC &= ~(1<<PORTC5);
+      break;
+    case 2:
+      PORTC &= ~(1<<PORTC2);
+      PORTC |=  (1<<PORTC3);
+      PORTC &= ~(1<<PORTC4);
+      PORTC |=  (1<<PORTC5);
+      break;
+    case 3:
+      PORTC &= ~(1<<PORTC2);
+      PORTC |=  (1<<PORTC3);
+      PORTC |=  (1<<PORTC4);
+      PORTC &= ~(1<<PORTC5);
+      break;
+    case 4:
+      PORTC |=  (1<<PORTC2);
+      PORTC &= ~(1<<PORTC3);
+      PORTC &= ~(1<<PORTC4);
+      PORTC |=  (1<<PORTC5);
+      break;
+    default:
+      break;
+  }
+}
