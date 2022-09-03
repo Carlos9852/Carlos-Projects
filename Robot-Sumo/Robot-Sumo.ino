@@ -4,14 +4,14 @@
 
 // =========================================================
 // --- Mapeamento de Hardware ---
-#define IN1    10                             //Driver L293D
-#define IN2    11                             //Driver L293D
-#define ENA     5                             //Enable driver
-#define ENB     6                             //Enable driver
-#define IN3     9                             //Driver L293D
-#define IN4     8                             //Driver L293D
-#define trig    4                             //Saída para o pino de trigger do sensor
-#define echo    3                             //Entrada para o pino de echo do sensor
+#define IN1    10                //Driver L293D
+#define IN2    11                //Driver L293D
+#define ENA     5                //Enable driver
+#define ENB     6                //Enable driver
+#define IN3     9                //Driver L293D
+#define IN4     8                //Driver L293D
+#define trig    4                //Saída para o pino de trigger do sensor
+#define echo    3                //Entrada para o pino de echo do sensor
 
 
 // =========================================================
@@ -26,37 +26,38 @@ int   pwm0a = 150,
 
 
 // =========================================================
-// --- Váriaveis Globais ---
-const int forward =  1,
-          backward = 2,
-          left     = 3,
-          right    = 4;
+// --- Constantes Globais ---
+const int forward =  1,          //constante para motor ir pra frente
+          backward = 2,          //constante para motor ir pra trás
+          left     = 3,          //constante para motor ir pra esquerda
+          right    = 4;          //constante para motor ir pra direita
 
 
 // =========================================================
 // --- Protótipo das Funções ---
-float measureDistance();
+float measureDistance();         //função para medir a distândia do ultrassônico
+void motorConfig(int modo);      //função para o controle da ponte H
 
 
 // =========================================================
 // --- Interrupção ---
 ISR(TIMER2_OVF_vect){
-  static int baseT1 = 0,           //variável local estática para base de tempo 1
-             baseT2 = 0;           //variável local estática para base de tempo 2
+  static int baseT1 = 0,         //variável local estática para base de tempo 1
+             baseT2 = 0;         //variável local estática para base de tempo 2
             
 
   TCNT2 = 0x06;                  //reinicializa Timer0
 
-  baseT1++;                        //incremente baseT1 em um
-  baseT2++;                        //incremente baseT2 em um
+  baseT1++;                      //incremente baseT1 em um
+  baseT2++;                      //incremente baseT2 em um
 
-  if(baseT1 == 1000){
-    baseT1 = 0;
-    Y = PIND & (1<<PORTD3);
-    X = PIND & (1<<PORTD2);
+  if(baseT1 == 1000){            //se a baseT1 for igual a 1000
+    baseT1 = 0;                  //zera a variável baseT1
+    Y = PIND & (1<<PORTD3);      //armazena o valor do sensor1 em X
+    X = PIND & (1<<PORTD2);      //armazena o valor do sensor2 em Y
   }//end if
 
-  if(flag) motorConfig(right);
+  if(flag) motorConfig(right);   //se a flag igual verdadeiro, o robô fica girando
   
 }//end ISR
 
@@ -131,7 +132,7 @@ void loop(){
     }//end else if
    
   }//end if
-}
+}//end loop
 
 
 
@@ -182,4 +183,4 @@ void motorConfig(int modo){
     default:
       break;
   }
-}
+}//end motorConfig
