@@ -101,24 +101,35 @@ void setup(){
 
 
 void loop(){
-  dist = measureDistance();
-  if(dist > 15.0){
-    pwm0b = 140;
-    pwm0a = 140;
-    flag = true;
-  }else{
-      flag=false;
-      pwm0b = 250;
-      pwm0a = 245;
-      motorConfig(forward);
+ 
+  dist = measureDistance();      //chama a função para o cálculo da distância
+  if(dist > 15.0){               //verifica se a distância é maior que 15cm
+    pwm0b = 140;                 //define o duty clycle do pino ENB em 55%
+    pwm0a = 140;                 //define o duty clycle do pino ENA em 55%
+    flag = true;                 //seta flag auxiliar em verdadeiro
+  }else{                         //se a distância é menor que 15cm
+      flag=false;                //seta a flag auxiliar em falso
+      pwm0b = 250;               //define o duty clycle do pino ENB em 98%
+      pwm0a = 245;               //define o duty clycle do pino ENA em 96%
+      motorConfig(forward);      //função para o mootor andar pra frente
     }//end else
     
    if(Y || X){
-   motorConfig(backward);
-   delay(600);
-   motorConfig(left);
-   delay(300);
-   motorConfig(forward);
+    if((X == true) && (Y == false)){
+      motorConfig(backward);
+      delay(600);
+      motorConfig(left);
+      delay(300);
+      motorConfig(forward);
+    }//end if
+    else if((X == false) && (Y == true)){
+      motorConfig(forward);
+      delay(600);
+      motorConfig(right);
+      delay(300);
+      motorConfig(backward);
+    }//end else if
+   
   }//end if
 }
 
