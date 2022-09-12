@@ -74,15 +74,19 @@ void setup(){
   PORTC &= ~(1<<0);              //inicializa analogica 0 (PC0) em LOW (trig)  
   DDRC  &= ~(1<<1);              //configura analogica 1 (PC1)) como entrada (echo)
 
-  DDRD  |=  (1<<5);              //configura digital 5 (PD5) como saída (ENA)
-  PORTD &= ~(1<<5);              //inicializa digital 5 (PD5) em LOW (ENA)
-  DDRD  |=  (1<<6);              //configura digital 6 (PD6) como saída (ENB)
-  PORTD &= ~(1<<6);              //inicializa digital 6 (PD6) em LOW (ENB)
-  for(int i = 2; i <= 5; i++){
-    DDRC  |=  (1<<i);            //configura A2-A5(PORTC) como saída (IN1--IN4)
-    PORTC &= ~(1<<i);            //inicializa A2-A5(PORTC) em LOW (IN1--IN4)
-  }
+  DDRD  |=  (1<<PORTD5);         //configura digital 5 (PD5) como saída (ENA)
+  PORTD &= ~(1<<PORTD5);         //inicializa digital 5 (PD5) em LOW (ENA)
+  DDRD  |=  (1<<PORTD6);         //configura digital 6 (PD6) como saída (ENB)
+  PORTD &= ~(1<<PORTD6);         //inicializa digital 6 (PD6) em LOW (ENB)
 
+  DDRD  |=  (1<<PORTD2);         //configura digital 2 (PD2) como saída (EN1)
+  PORTD &= ~(1<<PORTD2);         //inicializa digital 2 (PD2) como saída (EN1)
+  DDRD  |=  (1<<PORTD3);         //configura digital 3 (PD3) como saída (EN2)
+  PORTD &= ~(1<<PORTD3);         //inicializa digital 3 (PD3) como saída (EN2)
+  DDRD  |=  (1<<PORTD4);         //configura digital 4 (PD4) como saída (EN3)
+  PORTD &= ~(1<<PORTD4);         //inicializa digital 4 (PD4) como saída (EN3)
+  DDRD  |=  (1<<PORTD7);         //configura digital 7 (PD7) como saída (EN4)
+  PORTD &= ~(1<<PORTD7);         //inicializa digital 7 (PD7) como saída (EN4)
 
   DDRB  |=  (1<<PORTB5);         //configura digital 13 (PB5) como saída
   PORTB &= ~(1<<PORTB5);         //inicializa digital 13 (PB5) em LOW
@@ -157,30 +161,31 @@ void motorConfig(int modo){
   switch(modo){
     case 1:
 
-      PORTC |=  (1<<PORTC2);
-      PORTC &= ~(1<<PORTC3);
-      PORTC |= (1<<PORTC4);
-      PORTC &= ~(1<<PORTC5);
+      PORTD |=  (1<<PORTD2);
+      PORTD &= ~(1<<PORTD3);
+      PORTD |=  (1<<PORTD4);
+      PORTD &= ~(1<<PORTD7);
       break;
     case 2:
-      PORTC &= ~(1<<PORTC2);
-      PORTC |=  (1<<PORTC3);
-      PORTC &= ~(1<<PORTC4);
-      PORTC |=  (1<<PORTC5);
+      PORTD &= ~(1<<PORTD2);
+      PORTD |=  (1<<PORTD3);
+      PORTD &= ~(1<<PORTD4);
+      PORTD |=  (1<<PORTD7);
       break;
     case 3:
-      PORTC &= ~(1<<PORTC2);
-      PORTC |=  (1<<PORTC3);
-      PORTC |=  (1<<PORTC4);
-      PORTC &= ~(1<<PORTC5);
+      PORTD &= ~(1<<PORTD2);
+      PORTD |=  (1<<PORTD3);
+      PORTD |=  (1<<PORTD4);
+      PORTD &= ~(1<<PORTD7);
       break;
     case 4:
-      PORTC |=  (1<<PORTC2);
-      PORTC &= ~(1<<PORTC3);
-      PORTC &= ~(1<<PORTC4);
-      PORTC |=  (1<<PORTC5);
+      PORTD |=  (1<<PORTD2);
+      PORTD &= ~(1<<PORTD3);
+      PORTD &= ~(1<<PORTD4);
+      PORTD |=  (1<<PORTD7);
       break;
     default:
+      Serial.println("Tudo errado");
       break;
   }
 }//end motorConfig
