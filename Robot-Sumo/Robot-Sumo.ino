@@ -37,6 +37,7 @@ const int forward =  1,          //constante para motor ir pra frente
 // --- Protótipo das Funções ---
 float measureDistance();         //função para medir a distândia do ultrassônico
 void motorConfig(int modo);      //função para o controle da ponte H
+void search();
 
 
 // =========================================================
@@ -53,11 +54,8 @@ ISR(TIMER2_OVF_vect){
 
   if(baseT1 == 1000){            //se a baseT1 for igual a 1000
     baseT1 = 0;                  //zera a variável baseT1
-    X = PINC & (1<<PORTC3);      //armazena o valor do sensor1 em X
+    flag = PINC & (1<<PORTC3);   //armazena o valor do sensor1 em X
   }//end if
-
-  if(flag) motorConfig(right);   //se a flag igual verdadeiro, o robô fica girando
-  
 }//end ISR
 
 // =========================================================
@@ -104,13 +102,22 @@ void setup(){
 
 
 void loop(){
-  if(X){
+  float dist = measureDistance();
+
+   if(flag){
+    if(dist < 15.0){
+      pwm0a = 0xFA;
+      pwm0b = 0xFA;
+      motorConfig(forward);
+    }else if(dist > 15) search();
+  }
+  else if(!flag){
+    pwm0a = 0xFA;
+    pwm0b = 0xFA;
     motorConfig(backward);
     delay(600);
     motorConfig(left);
     delay(300);
-    motorConfig(forward);
-  }else{
     motorConfig(forward);
   }
   //Serial.println(dist);
@@ -126,10 +133,10 @@ float measureDistance(){         //Função que retorna a distância em centíme
   delayMicroseconds(10);         //Por 10µs ...
   PORTC &= ~(1<<PORTC4);         //Saída de trigger volta a nível baixo
 
-  pulse = pulseIn(A5, HIGH);      //Mede o tempo em que echo fica em nível alto e armazena na variável pulse
-  Serial.print(pulse/58.2);
-  Serial.println("cm");
-  return (pulse/58.82);          //Calcula distância em centímetros e retorna o valor
+  pulse = pulseIn(A5, HIGH);     //mede o tempo em que echo fica em nível alto e armazena na variável pulse
+  Serial.print(pulse/58.2);      //envia o valor em centimetros no monitor Serial
+  Serial.println("cm");          //envia "cm" no monitor Serial
+  return (pulse/58.82);          //calcula distância em centímetros e retorna o valor
 }//end measureDistante
 
 
@@ -167,3 +174,12 @@ void motorConfig(int modo){
       break;
   }
 }//end motorConfig
+
+void search(){
+  pwm0a = 0x96;
+  pwm0b = 0x96;
+  motorConfig(forward);
+  delay(300);
+  motorConfig(right);
+  delay(300);
+}
