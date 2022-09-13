@@ -1,6 +1,6 @@
 // =========================================================
 // --- Bibliotecas Auxiliares ---
-
+#include<Arduino.h>
 
 // =========================================================
 // --- Mapeamento de Hardware ---
@@ -53,8 +53,7 @@ ISR(TIMER2_OVF_vect){
 
   if(baseT1 == 1000){            //se a baseT1 for igual a 1000
     baseT1 = 0;                  //zera a variável baseT1
-    Y = PIND & (1<<PORTD3);      //armazena o valor do sensor1 em X
-    X = PIND & (1<<PORTD2);      //armazena o valor do sensor2 em Y
+    Y = PINC & (1<<PORTC3);      //armazena o valor do sensor1 em X
   }//end if
 
   if(flag) motorConfig(right);   //se a flag igual verdadeiro, o robô fica girando
@@ -67,12 +66,11 @@ void setup(){
 
   Serial.begin(9600);
 
-  DDRD &= ~(1<<3);               //configura digital 4 (PD4) como entrada (sensor1)
-  DDRD &= ~(1<<2);               //configura digital 2 (PD2) como entrada (sensor2)
+  DDRC &= ~(1<<PORTC3);          //configura analogica 3 (PC3) como entrada (sensor1)
 
-  DDRC  |=  (1<<0);              //configura analogica 0 (PC0) como saída  (trig)
-  PORTC &= ~(1<<0);              //inicializa analogica 0 (PC0) em LOW (trig)  
-  DDRC  &= ~(1<<1);              //configura analogica 1 (PC1)) como entrada (echo)
+  DDRC  |=  (1<<PORTC4);         //configura analogica 4 (PC4) como saída  (trig)
+  PORTC &= ~(1<<PORTC4);         //inicializa analogica 4 (PC4) em LOW (trig)  
+  DDRC  &= ~(1<<PORTC5);         //configura analogica 5 (PC5)) como entrada (echo)
 
   DDRD  |=  (1<<PORTD5);         //configura digital 5 (PD5) como saída (ENA)
   PORTD &= ~(1<<PORTD5);         //inicializa digital 5 (PD5) em LOW (ENA)
@@ -120,21 +118,13 @@ void loop(){
     }//end else
     
    if(Y || X){
-    if((X == true) && (Y == false)){
+    if((X == true)){
       motorConfig(backward);
       delay(600);
       motorConfig(left);
       delay(300);
       motorConfig(forward);
     }//end if
-    else if((X == false) && (Y == true)){
-      motorConfig(forward);
-      delay(600);
-      motorConfig(right);
-      delay(300);
-      motorConfig(backward);
-    }//end else if
-   
   }//end if
 }//end loop
 
@@ -144,11 +134,11 @@ float measureDistance(){         //Função que retorna a distância em centíme
 
   float pulse;                   //Armazena o valor de tempo em µs que o pino echo fica em nível alto
 
-  PORTC |= (1<<0);               //Saída de trigger em nível alto
+  PORTC |= (1<<PORTC4);          //Saída de trigger em nível alto
   delayMicroseconds(11);         //Por 10µs ...
-  PORTC &= ~(1<<0);              //Saída de trigger volta a nível baixo
+  PORTC &= ~(1<<PORTC4);         //Saída de trigger volta a nível baixo
 
-  pulse = pulseIn(A1, HIGH);      //Mede o tempo em que echo fica em nível alto e armazena na variável pulse
+  pulse = pulseIn(A5, HIGH);      //Mede o tempo em que echo fica em nível alto e armazena na variável pulse
   Serial.print(pulse/58.2);
   Serial.println("cm");
   return (pulse/58.82);          //Calcula distância em centímetros e retorna o valor
