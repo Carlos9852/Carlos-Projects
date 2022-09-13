@@ -21,16 +21,16 @@ int   pwm,
        Y      = 0, 
        X      = 0;
 bool flag = false;
-int   pwm0a = 150,
-      pwm0b = 150;
+int   pwm0a = 0xFA,
+      pwm0b = 0xFA;
 
 
 // =========================================================
 // --- Constantes Globais ---
 const int forward =  1,          //constante para motor ir pra frente
           backward = 2,          //constante para motor ir pra trás
-          left     = 3,          //constante para motor ir pra esquerda
-          right    = 4;          //constante para motor ir pra direita
+          right     = 3,         //constante para motor ir pra esquerda
+          left    = 4;           //constante para motor ir pra direita
 
 
 // =========================================================
@@ -53,7 +53,7 @@ ISR(TIMER2_OVF_vect){
 
   if(baseT1 == 1000){            //se a baseT1 for igual a 1000
     baseT1 = 0;                  //zera a variável baseT1
-    Y = PINC & (1<<PORTC3);      //armazena o valor do sensor1 em X
+    X = PINC & (1<<PORTC3);      //armazena o valor do sensor1 em X
   }//end if
 
   if(flag) motorConfig(right);   //se a flag igual verdadeiro, o robô fica girando
@@ -104,28 +104,16 @@ void setup(){
 
 
 void loop(){
- 
-  dist = measureDistance();      //chama a função para o cálculo da distância
-  if(dist > 15.0){               //verifica se a distância é maior que 15cm
-    pwm0b = 140;                 //define o duty clycle do pino ENB em 55%
-    pwm0a = 140;                 //define o duty clycle do pino ENA em 55%
-    flag = true;                 //seta flag auxiliar em verdadeiro
-  }else{                         //se a distância é menor que 15cm
-      flag=false;                //seta a flag auxiliar em falso
-      pwm0b = 250;               //define o duty clycle do pino ENB em 98%
-      pwm0a = 245;               //define o duty clycle do pino ENA em 96%
-      motorConfig(forward);      //função para o mootor andar pra frente
-    }//end else
-    
-   if(Y || X){
-    if((X == true)){
-      motorConfig(backward);
-      delay(600);
-      motorConfig(left);
-      delay(300);
-      motorConfig(forward);
-    }//end if
-  }//end if
+  if(X){
+    motorConfig(backward);
+    delay(600);
+    motorConfig(left);
+    delay(300);
+    motorConfig(forward);
+  }else{
+    motorConfig(forward);
+  }
+  //Serial.println(dist);
 }//end loop
 
 
@@ -135,7 +123,7 @@ float measureDistance(){         //Função que retorna a distância em centíme
   float pulse;                   //Armazena o valor de tempo em µs que o pino echo fica em nível alto
 
   PORTC |= (1<<PORTC4);          //Saída de trigger em nível alto
-  delayMicroseconds(11);         //Por 10µs ...
+  delayMicroseconds(10);         //Por 10µs ...
   PORTC &= ~(1<<PORTC4);         //Saída de trigger volta a nível baixo
 
   pulse = pulseIn(A5, HIGH);      //Mede o tempo em que echo fica em nível alto e armazena na variável pulse
@@ -151,26 +139,26 @@ void motorConfig(int modo){
   switch(modo){
     case 1:
 
-      PORTD |=  (1<<PORTD2);
-      PORTD &= ~(1<<PORTD3);
+      PORTD |=  (1<<PORTD3);
+      PORTD &= ~(1<<PORTD2);
       PORTD |=  (1<<PORTD4);
       PORTD &= ~(1<<PORTD7);
       break;
     case 2:
-      PORTD &= ~(1<<PORTD2);
-      PORTD |=  (1<<PORTD3);
+      PORTD &= ~(1<<PORTD3);
+      PORTD |=  (1<<PORTD2);
       PORTD &= ~(1<<PORTD4);
       PORTD |=  (1<<PORTD7);
       break;
     case 3:
-      PORTD &= ~(1<<PORTD2);
-      PORTD |=  (1<<PORTD3);
+      PORTD &= ~(1<<PORTD3);
+      PORTD |=  (1<<PORTD2);
       PORTD |=  (1<<PORTD4);
       PORTD &= ~(1<<PORTD7);
       break;
     case 4:
-      PORTD |=  (1<<PORTD2);
-      PORTD &= ~(1<<PORTD3);
+      PORTD |=  (1<<PORTD3);
+      PORTD &= ~(1<<PORTD2);
       PORTD &= ~(1<<PORTD4);
       PORTD |=  (1<<PORTD7);
       break;
