@@ -4,25 +4,16 @@
 
 // =========================================================
 // --- Mapeamento de Hardware ---
-#define IN1    10                //Driver L293D
-#define IN2    11                //Driver L293D
-#define ENA     5                //Enable driver
-#define ENB     6                //Enable driver
-#define IN3     9                //Driver L293D
-#define IN4     8                //Driver L293D
-#define trig    4                //Saída para o pino de trigger do sensor
-#define echo    3                //Entrada para o pino de echo do sensor
 
 
 // =========================================================
 // --- Váriaveis Globais ---
 float dist;
-int   pwm,
-       Y      = 0, 
-       X      = 0;
-bool flag = false;
-int   pwm0a = 0xFA,
-      pwm0b = 0xFA;
+int   X     = 0; 
+bool flag   = false,
+     carlos = false;
+int  pwm0a  = 0x82,
+     pwm0b  = 0x82;
 
 
 // =========================================================
@@ -52,10 +43,24 @@ ISR(TIMER2_OVF_vect){
   baseT1++;                      //incremente baseT1 em um
   baseT2++;                      //incremente baseT2 em um
 
-  if(baseT1 == 1000){            //se a baseT1 for igual a 1000
+  if(baseT1 == 10){            //se a baseT1 for igual a 1000
     baseT1 = 0;                  //zera a variável baseT1
     flag = PINC & (1<<PORTC3);   //armazena o valor do sensor1 em X
+    if(flag) carlos = true;
   }//end if
+  
+  if(carlos){
+    for(int i = 0; i < 0x96; i++){
+      pwm0a = i;
+      pwm0b = i;
+      motorConfig(backward);
+    }//end for
+  }//end if
+
+  if(baseT2 == 500){
+    carlos = false;
+    baseT2 = 0;
+  }
 }//end ISR
 
 // =========================================================
@@ -96,47 +101,47 @@ void setup(){
 
   analogWrite(5, pwm0b);
   analogWrite(6, pwm0a);
+
+  delay(5000);
   
 }//end main
 
 
 
 void loop(){
-  float dist = measureDistance();
+  dist = measureDistance();
 
-   if(flag){
-    if(dist < 15.0){
-      pwm0a = 0xFA;
-      pwm0b = 0xFA;
-      motorConfig(forward);
-    }else if(dist > 15) search();
-  }
-  else if(!flag){
-    pwm0a = 0xFA;
-    pwm0b = 0xFA;
-    motorConfig(backward);
-    delay(600);
-    motorConfig(left);
-    delay(300);
-    motorConfig(forward);
-  }
-  //Serial.println(dist);
+   if(!carlos){
+    if((dist <= 15.0)){
+      for(int i = 0; i < 0xFB; i++){
+        pwm0a = i;
+        pwm0b = i;
+        motorConfig(forward);
+      }//end for
+      PORTB |= (1<<PORTB5);
+    }else if(dist > 15.0){
+      motorConfig(left);
+      PORTB &= ~(1<<PORTB5); 
+    }//end else if
+  }//end if
 }//end loop
 
 
 
 float measureDistance(){         //Função que retorna a distância em centímetros
 
-  float pulse;                   //Armazena o valor de tempo em µs que o pino echo fica em nível alto
-
+  float pulse,                   //Armazena o valor de tempo em µs que o pino echo fica em nível alto
+        newPulse;
+        
   PORTC |= (1<<PORTC4);          //Saída de trigger em nível alto
   delayMicroseconds(10);         //Por 10µs ...
   PORTC &= ~(1<<PORTC4);         //Saída de trigger volta a nível baixo
 
   pulse = pulseIn(A5, HIGH);     //mede o tempo em que echo fica em nível alto e armazena na variável pulse
-  Serial.print(pulse/58.2);      //envia o valor em centimetros no monitor Serial
+  (pulse/58.2) != 0 ? newPulse = (pulse/58.2) : newPulse = 500;
+  Serial.print(newPulse);        //envia o valor em centimetros no monitor Serial
   Serial.println("cm");          //envia "cm" no monitor Serial
-  return (pulse/58.82);          //calcula distância em centímetros e retorna o valor
+  return (newPulse);             //calcula distância em centímetros e retorna o valor
 }//end measureDistante
 
 
@@ -176,9 +181,11 @@ void motorConfig(int modo){
 }//end motorConfig
 
 void search(){
-  pwm0a = 0x96;
-  pwm0b = 0x96;
+  for(int i = 0; i < 0x96; i++){
+    pwm0a = i;
+    pwm0b = i;
   motorConfig(forward);
+  }
   delay(300);
   motorConfig(right);
   delay(300);
