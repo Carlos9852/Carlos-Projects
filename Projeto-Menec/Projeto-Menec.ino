@@ -13,7 +13,8 @@ int   X     = 0;
 bool flag   = false,
      carlos = false;
 int  pwm0a  = 0x82,
-     pwm0b  = 0x82;
+     pwm0b  = 0x82,
+     estado = 0;
 
 
 // =========================================================
@@ -45,8 +46,9 @@ ISR(TIMER2_OVF_vect){
 
   if(baseT1 == 10){            //se a baseT1 for igual a 1000
     baseT1 = 0;                  //zera a variável baseT1
-    flag = PINC & (1<<PORTC3);   //armazena o valor do sensor1 em X
-    if(flag) carlos = true;
+    flag = PINC & (1<<PORTC2);   //armazena o valor do sensor1 em X
+    Serial.println(flag);
+    if(flag == !estado) carlos = true;
   }//end if
   
   if(carlos){
@@ -57,7 +59,7 @@ ISR(TIMER2_OVF_vect){
     }//end for
   }//end if
 
-  if(baseT2 == 500){
+  if(baseT2 == 250){
     carlos = false;
     baseT2 = 0;
   }
@@ -69,25 +71,26 @@ void setup(){
 
   Serial.begin(9600);
 
-  DDRC &= ~(1<<PORTC3);          //configura analogica 3 (PC3) como entrada (sensor1)
+  DDRC &= ~(1<<PORTC2);          //configura analogica 2 (PC2) como entrada (sensor1)
+  estado = PINC & (1<<PORTC2);
 
-  DDRC  |=  (1<<PORTC4);         //configura analogica 4 (PC4) como saída  (trig)
-  PORTC &= ~(1<<PORTC4);         //inicializa analogica 4 (PC4) em LOW (trig)  
-  DDRC  &= ~(1<<PORTC5);         //configura analogica 5 (PC5)) como entrada (echo)
+  DDRC  |=  (1<<PORTC1);         //configura analogica 1 (PC1) como saída  (trig)
+  PORTC &= ~(1<<PORTC1);         //inicializa analogica 1 (PC1) em LOW (trig)  
+  DDRC  &= ~(1<<PORTC0);         //configura analogica 0 (PC0)) como entrada (echo)
 
   DDRD  |=  (1<<PORTD5);         //configura digital 5 (PD5) como saída (ENA)
   PORTD &= ~(1<<PORTD5);         //inicializa digital 5 (PD5) em LOW (ENA)
   DDRD  |=  (1<<PORTD6);         //configura digital 6 (PD6) como saída (ENB)
   PORTD &= ~(1<<PORTD6);         //inicializa digital 6 (PD6) em LOW (ENB)
 
-  DDRD  |=  (1<<PORTD2);         //configura digital 2 (PD2) como saída (EN1)
-  PORTD &= ~(1<<PORTD2);         //inicializa digital 2 (PD2) como saída (EN1)
-  DDRD  |=  (1<<PORTD3);         //configura digital 3 (PD3) como saída (EN2)
-  PORTD &= ~(1<<PORTD3);         //inicializa digital 3 (PD3) como saída (EN2)
-  DDRD  |=  (1<<PORTD4);         //configura digital 4 (PD4) como saída (EN3)
-  PORTD &= ~(1<<PORTD4);         //inicializa digital 4 (PD4) como saída (EN3)
-  DDRD  |=  (1<<PORTD7);         //configura digital 7 (PD7) como saída (EN4)
-  PORTD &= ~(1<<PORTD7);         //inicializa digital 7 (PD7) como saída (EN4)
+  DDRB  |=  (1<<PORTB0);         //configura digital 8 (PB0) como saída (EN1)
+  PORTB &= ~(1<<PORTB0);         //inicializa digital 8 (PB0) como saída (EN1)
+  DDRB  |=  (1<<PORTB1);         //configura digital 9 (PB1) como saída (EN2)
+  PORTB &= ~(1<<PORTB1);         //inicializa digital 9 (PB1) como saída (EN2)
+  DDRB  |=  (1<<PORTB2);         //configura digital 10 (PB2) como saída (EN3)
+  PORTB &= ~(1<<PORTB2);         //inicializa digital 10 (PB2) como saída (EN3)
+  DDRB  |=  (1<<PORTB3);         //configura digital 11 (PB3) como saída (EN4)
+  PORTB &= ~(1<<PORTB3);         //inicializa digital 11 (PB3) como saída (EN4)
 
   DDRB  |=  (1<<PORTB5);         //configura digital 13 (PB5) como saída
   PORTB &= ~(1<<PORTB5);         //inicializa digital 13 (PB5) em LOW
@@ -99,8 +102,8 @@ void setup(){
   TIMSK2 = 0x01;                 //habilita interrupção do Timer0
   sei();                         //liga interrupções
 
-  analogWrite(5, pwm0b);
-  analogWrite(6, pwm0a);
+  analogWrite(5, pwm0a);
+  analogWrite(6, pwm0b);
 
   delay(5000);
   
@@ -113,7 +116,7 @@ void loop(){
 
    if(!carlos){
     if((dist <= 15.0)){
-      for(int i = 0; i < 0xFB; i++){
+      for(int i = 0; i < 0xFF; i++){
         pwm0a = i;
         pwm0b = i;
         motorConfig(forward);
@@ -133,11 +136,11 @@ float measureDistance(){         //Função que retorna a distância em centíme
   float pulse,                   //Armazena o valor de tempo em µs que o pino echo fica em nível alto
         newPulse;
         
-  PORTC |= (1<<PORTC4);          //Saída de trigger em nível alto
+  PORTC |= (1<<PORTC1);          //Saída de trigger em nível alto
   delayMicroseconds(10);         //Por 10µs ...
-  PORTC &= ~(1<<PORTC4);         //Saída de trigger volta a nível baixo
+  PORTC &= ~(1<<PORTC1);         //Saída de trigger volta a nível baixo
 
-  pulse = pulseIn(A5, HIGH);     //mede o tempo em que echo fica em nível alto e armazena na variável pulse
+  pulse = pulseIn(A0, HIGH);     //mede o tempo em que echo fica em nível alto e armazena na variável pulse
   (pulse/58.2) != 0 ? newPulse = (pulse/58.2) : newPulse = 500;
   Serial.print(newPulse);        //envia o valor em centimetros no monitor Serial
   Serial.println("cm");          //envia "cm" no monitor Serial
@@ -149,30 +152,30 @@ void motorConfig(int modo){
   analogWrite(6, pwm0a);
   analogWrite(5, pwm0b);
   switch(modo){
-    case 1:
+     case 1:
 
-      PORTD |=  (1<<PORTD3);
-      PORTD &= ~(1<<PORTD2);
-      PORTD |=  (1<<PORTD4);
-      PORTD &= ~(1<<PORTD7);
+      PORTB |=  (1<<PORTB0);
+      PORTB &= ~(1<<PORTB1);
+      PORTB |=  (1<<PORTB2);
+      PORTB &= ~(1<<PORTB3);
       break;
     case 2:
-      PORTD &= ~(1<<PORTD3);
-      PORTD |=  (1<<PORTD2);
-      PORTD &= ~(1<<PORTD4);
-      PORTD |=  (1<<PORTD7);
+      PORTB &= ~(1<<PORTB0);
+      PORTB |=  (1<<PORTB1);
+      PORTB &= ~(1<<PORTB2);
+      PORTB |=  (1<<PORTB3);
       break;
     case 3:
-      PORTD &= ~(1<<PORTD3);
-      PORTD |=  (1<<PORTD2);
-      PORTD |=  (1<<PORTD4);
-      PORTD &= ~(1<<PORTD7);
+      PORTB |=  (1<<PORTB0);
+      PORTB &= ~(1<<PORTB1);
+      PORTB &= ~(1<<PORTB2);
+      PORTB |=  (1<<PORTB3);
       break;
     case 4:
-      PORTD |=  (1<<PORTD3);
-      PORTD &= ~(1<<PORTD2);
-      PORTD &= ~(1<<PORTD4);
-      PORTD |=  (1<<PORTD7);
+      PORTB &= ~(1<<PORTB0);
+      PORTB |=  (1<<PORTB1);
+      PORTB |=  (1<<PORTB2);
+      PORTB &= ~(1<<PORTB3);
       break;
     default:
       Serial.println("Tudo errado");
@@ -181,7 +184,7 @@ void motorConfig(int modo){
 }//end motorConfig
 
 void search(){
-  for(int i = 0; i < 0x96; i++){
+  for(int i = 0; i < 0xB0; i++){
     pwm0a = i;
     pwm0b = i;
   motorConfig(forward);
