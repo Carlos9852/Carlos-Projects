@@ -11,10 +11,10 @@
 float dist;
 int   X     = 0; 
 bool flag   = false,
+     estado = false,
      carlos = false;
 int  pwm0a  = 0x82,
-     pwm0b  = 0x82,
-     estado = 0;
+     pwm0b  = 0x82;
 
 
 // =========================================================
@@ -47,19 +47,17 @@ ISR(TIMER2_OVF_vect){
   if(baseT1 == 10){            //se a baseT1 for igual a 1000
     baseT1 = 0;                  //zera a variável baseT1
     flag = PINC & (1<<PORTC2);   //armazena o valor do sensor1 em X
-    Serial.println(flag);
+    //Serial.println(flag);
     if(flag == !estado) carlos = true;
   }//end if
   
   if(carlos){
-    for(int i = 0; i < 0x96; i++){
-      pwm0a = i;
-      pwm0b = i;
+      pwm0a = 0x96;
+      pwm0b = 0x96;
       motorConfig(backward);
-    }//end for
   }//end if
 
-  if(baseT2 == 250){
+  if(baseT2 == 400){
     carlos = false;
     baseT2 = 0;
   }
@@ -71,7 +69,8 @@ void setup(){
 
   Serial.begin(9600);
 
-  DDRC &= ~(1<<PORTC2);          //configura analogica 2 (PC2) como entrada (sensor1)
+  DDRC  &= ~(1<<PORTC2);          //configura analogica 2 (PC2) como entrada (sensor1)
+  PORTC |=  (1<<PORTC2);
   estado = PINC & (1<<PORTC2);
 
   DDRC  |=  (1<<PORTC1);         //configura analogica 1 (PC1) como saída  (trig)
@@ -105,6 +104,7 @@ void setup(){
   analogWrite(5, pwm0a);
   analogWrite(6, pwm0b);
 
+  Serial.println(estado);
   delay(5000);
   
 }//end main
@@ -116,14 +116,16 @@ void loop(){
 
    if(!carlos){
     if((dist <= 15.0)){
-      for(int i = 0; i < 0xFF; i++){
-        pwm0a = i;
-        pwm0b = i;
+      
+        pwm0a = 0xFF;
+        pwm0b = 0xFf;
         motorConfig(forward);
-      }//end for
       PORTB |= (1<<PORTB5);
     }else if(dist > 15.0){
-      motorConfig(left);
+      /*pwm0a=0xA0;
+      pwm0b=0xA0;
+      motorConfig(left);*/
+      search();
       PORTB &= ~(1<<PORTB5); 
     }//end else if
   }//end if
@@ -184,12 +186,10 @@ void motorConfig(int modo){
 }//end motorConfig
 
 void search(){
-  for(int i = 0; i < 0xB0; i++){
-    pwm0a = i;
-    pwm0b = i;
-  motorConfig(forward);
-  }
-  delay(300);
+   pwm0a = 0xA0;
+   pwm0b = 0xA0;
+   motorConfig(forward);
+  delay(200);
   motorConfig(right);
-  delay(300);
+  delay(200);
 }
