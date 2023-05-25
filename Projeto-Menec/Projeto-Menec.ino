@@ -23,6 +23,8 @@ int ena  = 5,
 bool sensor, 
      estado, 
      flag = false;
+int  pwma = 150,
+     pwmb = 150;
 //===========================================================================
 // --- Protótipo das funções ---
 int ad_conv(int input);
@@ -46,6 +48,7 @@ ISR(TIMER1_OVF_vect) {
       Serial.print(sensor);
       Serial.println(" Achei a linha!");
       flag = true;
+      pwma=pwmb=190;
       motorConfig(backward);
     }
     cont = 0;
@@ -53,12 +56,12 @@ ISR(TIMER1_OVF_vect) {
 
   if (flag) {
     cont2++;
-    if (cont2 == 200){
+    if (cont2 == 100){
+      motorConfig(left);
       flag = false;
       cont2=0;
     }
   }
-
 }//end ISR
 
 
@@ -68,6 +71,7 @@ void setup() {
   settings();
   estado = PINC & sens;
   Serial.println(estado);
+  delay(2000);
   motorConfig(forward);
 
 }
@@ -83,11 +87,13 @@ void loop() {
     /*Serial.print(sensor);
     Serial.print(" ");
     Serial.println(estado);*/
-    if (dist < 7) {
+    if (dist < 8) {
       Serial.println("Adversário Encontrado!");
+      pwma=pwmb=255;
       motorConfig(forward);
     } else {
-      Serial.println("Procurando adversártio!");
+      Serial.println("Procurando adversário!");
+      pwma=pwmb=140;
       search();
     }
   }
@@ -119,12 +125,12 @@ int ad_conv(int input) {
 //===========================================================================
 // --- motorConfig ---
 void motorConfig(int option) {
-  analogWrite(ena, 128);
-  analogWrite(enb, 128);
+  analogWrite(ena, pwma);
+  analogWrite(enb, pwmb);
   switch (option) {
     case forward:
       PORTB |=  in1;
-      PORTB &= ~in4;
+      PORTB &= ~in2;
       PORTB |=  in3;
       PORTB &= ~in4;
       //Serial.println("frente");
@@ -148,7 +154,7 @@ void motorConfig(int option) {
 
     case right:
       PORTB |=  in1;
-      PORTB &= ~in4;
+      PORTB &= ~in2;
       PORTB &= ~in3;
       PORTB |=  in4;
       //Serial.println("Direita");
