@@ -43,6 +43,8 @@ ISR(TIMER1_OVF_vect) {
   if (cont == 50) {
     sensor = PINC & sens;
     if (sensor != estado) {
+      Serial.print(sensor);
+      Serial.println(" Achei a linha!");
       flag = true;
       motorConfig(backward);
     }
@@ -74,17 +76,22 @@ void setup() {
 //===========================================================================
 // --- Loop infinito ---
 void loop() {
-  float  dist = distanceMeasure();
+  float  dist=distanceMeasure();
 
   if ((sensor == estado) && (flag==false)){
-    //Serial.print(dist);
-    if (dist <= 10) {
+    Serial.println(dist);
+    /*Serial.print(sensor);
+    Serial.print(" ");
+    Serial.println(estado);*/
+    if (dist < 7) {
+      Serial.println("Adversário Encontrado!");
       motorConfig(forward);
     } else {
+      Serial.println("Procurando adversártio!");
       search();
     }
   }
-  //delay(10);
+  delay(100);
 }
 
 
@@ -120,7 +127,7 @@ void motorConfig(int option) {
       PORTB &= ~in4;
       PORTB |=  in3;
       PORTB &= ~in4;
-      Serial.println("frente");
+      //Serial.println("frente");
       break;
 
     case backward:
@@ -128,7 +135,7 @@ void motorConfig(int option) {
       PORTB |=  in2;
       PORTB &= ~in3;
       PORTB |=  in4;
-      Serial.println("Trás");
+      //Serial.println("Trás");
       break;
 
     case left:
@@ -136,7 +143,7 @@ void motorConfig(int option) {
       PORTB |=  in2;
       PORTB |=  in3;
       PORTB &= ~in4;
-      Serial.println("Esquerda");
+      //Serial.println("Esquerda");
       break;
 
     case right:
@@ -144,7 +151,7 @@ void motorConfig(int option) {
       PORTB &= ~in4;
       PORTB &= ~in3;
       PORTB |=  in4;
-      Serial.println("Direita");
+      //Serial.println("Direita");
       break;
 
     default:
