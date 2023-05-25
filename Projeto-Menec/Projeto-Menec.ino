@@ -1,195 +1,217 @@
-// =========================================================
-// --- Bibliotecas Auxiliares ---
-#include<Arduino.h>
+//===========================================================================
+// --- mapeamento de hardware ---
+int ena  = 5,
+    enb  = 6,
+    in1  = (1 << PORTB0),
+    in2  = (1 << PORTB1),
+    in3  = (1 << PORTB2),
+    in4  = (1 << PORTB3),
+    led  = (1 << PORTB5),
+    echo = (1 << PORTC0),
+    trig = (1 << PORTC1),
+    sens = (1 << PORTC2);
 
-// =========================================================
-// --- Mapeamento de Hardware ---
+//===========================================================================
+// --- constantes globais ---
+#define forward 1
+#define backward 2
+#define left 3
+#define right 4
 
-
-// =========================================================
-// --- Váriaveis Globais ---
-float dist;
-int   X     = 0; 
-bool flag   = false,
-     estado = false,
-     carlos = false;
-int  pwm0a  = 0x82,
-     pwm0b  = 0x82;
-
-
-// =========================================================
-// --- Constantes Globais ---
-const int forward =  1,          //constante para motor ir pra frente
-          backward = 2,          //constante para motor ir pra trás
-          right     = 3,         //constante para motor ir pra esquerda
-          left    = 4;           //constante para motor ir pra direita
-
-
-// =========================================================
-// --- Protótipo das Funções ---
-float measureDistance();         //função para medir a distândia do ultrassônico
-void motorConfig(int modo);      //função para o controle da ponte H
+//===========================================================================
+// --- variáveis globais ---
+bool sensor, 
+     estado, 
+     flag = false;
+//===========================================================================
+// --- Protótipo das funções ---
+int ad_conv(int input);
+void motorConfig(int option);
+float distanceMeasure();
 void search();
+void settings();
 
 
-// =========================================================
+//===========================================================================
 // --- Interrupção ---
-ISR(TIMER2_OVF_vect){
-  static int baseT1 = 0,         //variável local estática para base de tempo 1
-             baseT2 = 0;         //variável local estática para base de tempo 2
-            
+ISR(TIMER1_OVF_vect) {
+  TCNT1 = 0xc17f;
 
-  TCNT2 = 0x06;                  //reinicializa Timer0
+  static int cont = 0, cont2;
+  cont++;
 
-  baseT1++;                      //incremente baseT1 em um
-  baseT2++;                      //incremente baseT2 em um
-
-  if(baseT1 == 10){            //se a baseT1 for igual a 1000
-    baseT1 = 0;                  //zera a variável baseT1
-    flag = PINC & (1<<PORTC2);   //armazena o valor do sensor1 em X
-    //Serial.println(flag);
-    if(flag == !estado) carlos = true;
-  }//end if
-  
-  if(carlos){
-      pwm0a = 0x96;
-      pwm0b = 0x96;
+  if (cont == 50) {
+    sensor = PINC & sens;
+    if (sensor != estado) {
+      flag = true;
       motorConfig(backward);
-  }//end if
-
-  if(baseT2 == 400){
-    carlos = false;
-    baseT2 = 0;
+    }
+    cont = 0;
   }
+
+  if (flag) {
+    cont2++;
+    if (cont2 == 200){
+      flag = false;
+      cont2=0;
+    }
+  }
+
 }//end ISR
 
-// =========================================================
+
+//===========================================================================
 // --- Função Principal ---
-void setup(){
-
-  Serial.begin(9600);
-
-  DDRC  &= ~(1<<PORTC2);          //configura analogica 2 (PC2) como entrada (sensor1)
-  PORTC |=  (1<<PORTC2);
-  estado = PINC & (1<<PORTC2);
-
-  DDRC  |=  (1<<PORTC1);         //configura analogica 1 (PC1) como saída  (trig)
-  PORTC &= ~(1<<PORTC1);         //inicializa analogica 1 (PC1) em LOW (trig)  
-  DDRC  &= ~(1<<PORTC0);         //configura analogica 0 (PC0)) como entrada (echo)
-
-  DDRD  |=  (1<<PORTD5);         //configura digital 5 (PD5) como saída (ENA)
-  PORTD &= ~(1<<PORTD5);         //inicializa digital 5 (PD5) em LOW (ENA)
-  DDRD  |=  (1<<PORTD6);         //configura digital 6 (PD6) como saída (ENB)
-  PORTD &= ~(1<<PORTD6);         //inicializa digital 6 (PD6) em LOW (ENB)
-
-  DDRB  |=  (1<<PORTB0);         //configura digital 8 (PB0) como saída (EN1)
-  PORTB &= ~(1<<PORTB0);         //inicializa digital 8 (PB0) como saída (EN1)
-  DDRB  |=  (1<<PORTB1);         //configura digital 9 (PB1) como saída (EN2)
-  PORTB &= ~(1<<PORTB1);         //inicializa digital 9 (PB1) como saída (EN2)
-  DDRB  |=  (1<<PORTB2);         //configura digital 10 (PB2) como saída (EN3)
-  PORTB &= ~(1<<PORTB2);         //inicializa digital 10 (PB2) como saída (EN3)
-  DDRB  |=  (1<<PORTB3);         //configura digital 11 (PB3) como saída (EN4)
-  PORTB &= ~(1<<PORTB3);         //inicializa digital 11 (PB3) como saída (EN4)
-
-  DDRB  |=  (1<<PORTB5);         //configura digital 13 (PB5) como saída
-  PORTB &= ~(1<<PORTB5);         //inicializa digital 13 (PB5) em LOW
-
-  cli();                         //desliga interrupções
-  TCCR2A = 0x00;                 //define para operação normal
-  TCCR2B = 0x04;                 //prescaler 1:64
-  TCNT2  = 0x06;                 //inicia Timer0 para contar até 250
-  TIMSK2 = 0x01;                 //habilita interrupção do Timer0
-  sei();                         //liga interrupções
-
-  analogWrite(5, pwm0a);
-  analogWrite(6, pwm0b);
-
+void setup() {
+  settings();
+  estado = PINC & sens;
   Serial.println(estado);
-  delay(5000);
-  
-}//end main
+  motorConfig(forward);
+
+}
 
 
+//===========================================================================
+// --- Loop infinito ---
+void loop() {
+  float  dist = distanceMeasure();
 
-void loop(){
-  dist = measureDistance();
-
-   if(!carlos){
-    if((dist <= 15.0)){
-      
-        pwm0a = 0xFF;
-        pwm0b = 0xFf;
-        motorConfig(forward);
-      PORTB |= (1<<PORTB5);
-    }else if(dist > 15.0){
-      /*pwm0a=0xA0;
-      pwm0b=0xA0;
-      motorConfig(left);*/
+  if ((sensor == estado) && (flag==false)){
+    //Serial.print(dist);
+    if (dist <= 10) {
+      motorConfig(forward);
+    } else {
       search();
-      PORTB &= ~(1<<PORTB5); 
-    }//end else if
-  }//end if
-}//end loop
+    }
+  }
+  //delay(10);
+}
+
+
+//===========================================================================
+// --- Conversão AD ---
+int ad_conv(int input) {
+  static int analog;
+  if (input <= 5) {
+    ADMUX |= input;
+  } else {
+    return 0;
+  }
+
+  ADCSRA |= (1 << ADSC);
+  while (! (ADCSRA &= ~(1 << ADIF)));
+  ADCSRA |= (1 << ADIF);
+  analog = (ADCH << 8) | ADCL; //une os dois bytes do conversor
+
+  ADMUX = 0x40;   //seleciona o canal A0
+  return analog;  //retorna o valor analogico
+}//end ad_conv
 
 
 
-float measureDistance(){         //Função que retorna a distância em centímetros
-
-  float pulse,                   //Armazena o valor de tempo em µs que o pino echo fica em nível alto
-        newPulse;
-        
-  PORTC |= (1<<PORTC1);          //Saída de trigger em nível alto
-  delayMicroseconds(10);         //Por 10µs ...
-  PORTC &= ~(1<<PORTC1);         //Saída de trigger volta a nível baixo
-
-  pulse = pulseIn(A0, HIGH);     //mede o tempo em que echo fica em nível alto e armazena na variável pulse
-  (pulse/58.2) != 0 ? newPulse = (pulse/58.2) : newPulse = 500;
-  Serial.print(newPulse);        //envia o valor em centimetros no monitor Serial
-  Serial.println("cm");          //envia "cm" no monitor Serial
-  return (newPulse);             //calcula distância em centímetros e retorna o valor
-}//end measureDistante
-
-
-void motorConfig(int modo){
-  analogWrite(6, pwm0a);
-  analogWrite(5, pwm0b);
-  switch(modo){
-     case 1:
-
-      PORTB |=  (1<<PORTB0);
-      PORTB &= ~(1<<PORTB1);
-      PORTB |=  (1<<PORTB2);
-      PORTB &= ~(1<<PORTB3);
+//===========================================================================
+// --- motorConfig ---
+void motorConfig(int option) {
+  analogWrite(ena, 128);
+  analogWrite(enb, 128);
+  switch (option) {
+    case forward:
+      PORTB |=  in1;
+      PORTB &= ~in4;
+      PORTB |=  in3;
+      PORTB &= ~in4;
+      Serial.println("frente");
       break;
-    case 2:
-      PORTB &= ~(1<<PORTB0);
-      PORTB |=  (1<<PORTB1);
-      PORTB &= ~(1<<PORTB2);
-      PORTB |=  (1<<PORTB3);
+
+    case backward:
+      PORTB &= ~in1;
+      PORTB |=  in2;
+      PORTB &= ~in3;
+      PORTB |=  in4;
+      Serial.println("Trás");
       break;
-    case 3:
-      PORTB |=  (1<<PORTB0);
-      PORTB &= ~(1<<PORTB1);
-      PORTB &= ~(1<<PORTB2);
-      PORTB |=  (1<<PORTB3);
+
+    case left:
+      PORTB &= ~in1;
+      PORTB |=  in2;
+      PORTB |=  in3;
+      PORTB &= ~in4;
+      Serial.println("Esquerda");
       break;
-    case 4:
-      PORTB &= ~(1<<PORTB0);
-      PORTB |=  (1<<PORTB1);
-      PORTB |=  (1<<PORTB2);
-      PORTB &= ~(1<<PORTB3);
+
+    case right:
+      PORTB |=  in1;
+      PORTB &= ~in4;
+      PORTB &= ~in3;
+      PORTB |=  in4;
+      Serial.println("Direita");
       break;
+
     default:
-      Serial.println("Tudo errado");
+      Serial.println("Algo deu errado");
       break;
   }
-}//end motorConfig
+}
 
-void search(){
-   pwm0a = 0xA0;
-   pwm0b = 0xA0;
-   motorConfig(forward);
-  delay(200);
+
+//===========================================================================
+// --- distanceMeasure ---
+float distanceMeasure() {
+  float pulse, dist;
+  PORTC |= trig;
+  delayMicroseconds(10);
+  PORTC &= ~trig;
+  pulse = pulseIn(A0, HIGH);
+  (pulse / 58.2) ? dist = pulse / 58.2 : dist = 1000;
+  return dist;
+}
+
+
+//===========================================================================
+// --- search ---
+void search() {
+  motorConfig(forward);
+  delay(400);
   motorConfig(right);
   delay(200);
+}
+
+//===========================================================================
+// --- settings ---
+void settings() {
+
+  cli();
+  Serial.begin(9600);
+
+  DDRB  |=  led;
+  PORTB &= ~led;
+
+  DDRD  |=  (1 << PORTD5);
+  DDRD  |=  (1 << PORTD6);
+  PORTD &= ~(1 << PORTD5);
+  PORTD &= ~(1 << PORTD6);
+
+  DDRB  |=  in1;
+  DDRB  |=  in2;
+  DDRB  |=  in3;
+  DDRB  |=  in4;
+  PORTB &= ~in1;
+  PORTB &= ~in2;
+  PORTB &= ~in3;
+  PORTB &= ~in4;
+
+  DDRC  |=  trig;
+  DDRC  &= ~echo;
+  DDRC  &= ~sens;
+  PORTC |=  trig;
+  //PORTC |=  sens;
+
+  TCCR1A = 0x00;             //inicializa o timer1 no modo normal
+  TCCR1B = 0x01;             //define prescaler como 1
+  TCNT1  = 0xc17f;           //inicializa o timer1 com 49535
+  TIMSK1 = 0x01;             //habilita interrupção por overflow
+
+  ADCSRA = 0x93;             //configura o registrador
+  ADMUX = 0x40;              //habilita Vref, deleciona canal A0
+  sei();
 }
