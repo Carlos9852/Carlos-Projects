@@ -87,7 +87,7 @@ void loop() {
     /*Serial.print(sensor);
     Serial.print(" ");
     Serial.println(estado);*/
-    if (dist < 8) {
+    if (dist < 9) {
       Serial.println("Adversário Encontrado!");
       pwma=pwmb=255;
       motorConfig(forward);
